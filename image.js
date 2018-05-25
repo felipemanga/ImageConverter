@@ -264,7 +264,8 @@ function loadImage( img, cleanName, isPNG ){
 	cleanName + "_bitmap[]",
 	cleanName + "_mask[]",
 	cleanName + "_plus_mask[]"
-    ]
+    ];
+    
     for( var k in ret ){
 	src += ret[k];
 	headers.push(k);
@@ -272,7 +273,8 @@ function loadImage( img, cleanName, isPNG ){
     
     return {
 	data,
-	cpp: ascii + src,
+	ascii,
+	cpp: src,
 	h: "extern const unsigned char PROGMEM " + headers.join(', ') + ";\n"
     };
 }
