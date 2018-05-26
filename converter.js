@@ -19,7 +19,7 @@ function dropFile( event ){
     var files = dt.files;
     var out = [];
     var pendingPal = 1;
-    var pending = files.length;
+    var pending = 0;
 
     for (var i = 0; i < files.length; i++) {
 	let file = files[i];
@@ -42,12 +42,16 @@ function dropFile( event ){
 	    let file = files[i];
 
 	    if( /\.(png|jpg)$/i.test(file.name) ){
+		pending++;
 		let fr = new FileReader();
 		fr.onload = convert.bind( null, fr, file );
 		fr.readAsDataURL(file);
 	    }
 	    
 	}
+
+	if( !pending )
+	    write();
 
     }
 
