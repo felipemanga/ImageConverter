@@ -89,7 +89,7 @@ function dropFile( event ){
 
 	out.push({
 	    name,
-	    cpp:`const unsigned short ${name} = {${acc.join(',')}};\n`
+	    cpp:`const unsigned short ${name}[] = {${acc.join(',')}};\n`
 	});
 	pendingPal--;
 
@@ -124,16 +124,19 @@ function dropFile( event ){
 
     function convert8Bit( ab ){
 	var name = ab.name;
-	var acc = [];
+	var strips = [], acc = [], racc = [];
 	var pal = lastPalette;
 	var data = ab.data.data;
 
 	var W=ab.data.width;
 	var H=ab.data.height;
 
-	acc.push( W, H );
-
 	for( var x=0; x<W; ++x ){
+
+	    var firstOpaque = -1;
+	    var lastOpaque = -1;
+	    var start = acc.length;
+	    
 	    for( var y=0; y<H; ++y ){
 		var i = (y*W + x) * 4;
 		var closestC = 0;
@@ -148,6 +151,11 @@ function dropFile( event ){
 		var c=0;
 		
 		if( A > 128 ){
+		    
+		    if( firstOpaque == -1 )
+			firstOpaque = y;
+		    
+		    lastOpaque = y;
 		    
 		    for( ; c<pal.length; ++c ){
 			var ca = pal[c];
@@ -166,18 +174,33 @@ function dropFile( event ){
 		    }
 		    
 		}
+
+		var strc = `0x` +
+		    closestC.toString(16).padStart(2, '0');
 		
-		acc.push(
-		    (!y?'\n':'') +
-			`0x` +
-			closestC.toString(16).padStart(2, '0')
-		);
+		if( firstOpaque != -1 )
+		    acc.push( (firstOpaque == y ? '\n' : '') + strc);
+		
+		racc.push((!y?'\n':'') + strc);
+	    }
+
+	    if( firstOpaque != -1 ){
+		acc.splice( acc.length - (H - lastOpaque - 1), H - lastOpaque - 1 );
+		strips.push( firstOpaque, lastOpaque + 1 - firstOpaque );
+	    }else{
+		strips.push( 0, 0 );
 	    }
 	    
 	}
 
+	strips[0] = "\n" + strips[0];
+
+	acc = [ W, H, ...strips, ...acc ];
+
 	ab.cpp = '\n\n// ------------ POKITTO-compatible 8bits per pixel -----------------' +
-	    `\nconst unsigned char ${name}_8bit = {\n//width, height\n${acc.join(',')}\n};\n\n` + ab.cpp;
+	    `\nconst unsigned char ${name}_sprite8[] = {\n//width, height\n${acc.join(',')}\n};\n\n` +
+	    `\nconst unsigned char ${name}_tile8[] = {\n${racc.join(',')}\n};\n\n` +
+	    ab.cpp;
 	
     }
 
