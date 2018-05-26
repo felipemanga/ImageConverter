@@ -116,7 +116,7 @@ function dropFile( event ){
 	    
 	    out.push( ab );
 	    pending--;
-	    if( !--pending )
+	    if( !pending )
 		write();
 	}
 	
