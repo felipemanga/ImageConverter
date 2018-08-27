@@ -109,13 +109,49 @@ function dropFile( event ){
 
 	    if( lastPalette )
 		convert8Bit( ab );
+
+	    convert32Bit( ab );
 	    
 	    out.push( ab );
-	    pending--;
 	    if( !--pending )
 		write();
 	}
 	
+    }
+
+    function convert32Bit( ab ){
+	var data = ab.data.data;
+	var W = ab.data.width;
+	var acc = [W, ab.data.height];
+
+	for( var y=0; y<ab.data.height; ++y ){
+	    for( var x=0; x<W; ++x ){
+		var i = (y*W+x)*4;
+		acc.push( data[i++],data[i++],data[i++] );
+	    }
+	}
+
+	ab.cpp = '\n\n// ------------ 24 bits per pixel -----------------' +
+	    `\nconst unsigned char ${name}_24bit = {\n//width, height\n${acc.join(',')}\n};\n\n` + ab.cpp;
+	
+	
+	var url = URL.createObjectURL(
+	    new Blob([data], {type:'application/bin'})
+	);
+	
+	var a = document.createElement('A');
+	
+	a.href = url;
+	a.textContent = "RGBA";
+	a.setAttribute("download", ab.name + ".RGB");
+	a.style = `
+position: absolute; 
+top:0; right:0;
+border: solid 1px #123;
+background: #345;
+color: #ABC;
+`;
+	document.body.appendChild( a );
     }
 
     function convert8Bit( ab ){
